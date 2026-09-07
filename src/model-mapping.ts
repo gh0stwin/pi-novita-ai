@@ -27,7 +27,7 @@ export interface OpenAICompletionsCompat {
   supportsStrictMode?: boolean;
   maxTokensField?: "max_completion_tokens" | "max_tokens";
   requiresReasoningContentOnAssistantMessages?: boolean;
-  thinkingFormat?: "qwen" | "deepseek" | "openai";
+  thinkingFormat?: "qwen" | "deepseek" | "glm";
 }
 
 export interface ProviderModel {
@@ -106,11 +106,13 @@ const DEEPSEEK_EFFORT_COMPAT: OpenAICompletionsCompat = {
 };
 
 // GLM-5.2/5.3 keep thinking at its API default (enabled for 5.2, forced
-// enabled for 5.3) and carry effort purely through `reasoning_effort`, which
-// is Pi's plain "openai" format.
+// enabled for 5.3) and carry effort purely through `reasoning_effort` with no
+// thinking control sent. pi-ai's serializer has no case for this value, so it
+// falls through to the plain reasoning_effort path - the label is only there
+// to keep the local compat union honest about which family uses it.
 const GLM_EFFORT_COMPAT: OpenAICompletionsCompat = {
   ...EFFORT_REASONING_COMPAT,
-  thinkingFormat: "openai",
+  thinkingFormat: "glm",
 };
 
 /**
@@ -129,7 +131,7 @@ interface ThinkingFamily {
   /** Value that disables thinking; null when impossible. */
   off: string | null;
   /** pi-ai thinkingFormat producing the family's wire shape. */
-  thinkingFormat: "deepseek" | "openai";
+  thinkingFormat: "deepseek" | "glm";
   /** Reference documenting the family's reasoning vocabulary. */
   docs: string;
 }
@@ -154,7 +156,7 @@ const THINKING_FAMILIES: readonly ThinkingFamily[] = [
     prefixes: ["zai-org/glm-5.3"],
     levels: ["low", "high", "max"],
     off: null,
-    thinkingFormat: "openai",
+    thinkingFormat: "glm",
     docs: "https://docs.z.ai/guides/llm/glm-5.3",
   },
   {
@@ -165,7 +167,7 @@ const THINKING_FAMILIES: readonly ThinkingFamily[] = [
     prefixes: ["zai-org/glm-5.2"],
     levels: ["high", "max"],
     off: "none",
-    thinkingFormat: "openai",
+    thinkingFormat: "glm",
     docs: "https://docs.z.ai/guides/capabilities/thinking",
   },
 ];

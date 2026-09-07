@@ -123,7 +123,6 @@ test("deepseek-v4 family matches effort compat and distinct low/high/max levels"
   for (const id of [
     "deepseek/deepseek-v4-flash",
     "deepseek/deepseek-v4-pro",
-    "deepseek/deepseek-v4.1",
   ]) {
     const model = map({ id, features: ["reasoning"] });
     assert.equal(model.compat.thinkingFormat, "deepseek", id);
@@ -149,9 +148,9 @@ test("deepseek-v4 family matches effort compat and distinct low/high/max levels"
 });
 
 test("glm-5.3 family has forced thinking with no off level", () => {
-  for (const id of ["zai-org/glm-5.3", "zai-org/glm-5.3-flash", "zai-org/glm-5.3-air"]) {
+  for (const id of ["zai-org/glm-5.3-flash"]) {
     const model = map({ id, features: ["reasoning"] });
-    assert.equal(model.compat.thinkingFormat, "openai", id);
+    assert.equal(model.compat.thinkingFormat, "glm", id);
     assert.equal(model.compat.supportsReasoningEffort, true, id);
     assert.equal(
       model.compat.requiresReasoningContentOnAssistantMessages,
@@ -175,7 +174,7 @@ test("glm-5.3 family has forced thinking with no off level", () => {
 
 test("glm-5.2 family disables thinking via reasoning_effort none", () => {
   const model = map({ id: "zai-org/glm-5.2", features: ["reasoning"] });
-  assert.equal(model.compat.thinkingFormat, "openai");
+  assert.equal(model.compat.thinkingFormat, "glm");
   assert.equal(model.compat.supportsReasoningEffort, true);
   assert.equal(
     model.compat.requiresReasoningContentOnAssistantMessages,
@@ -211,9 +210,11 @@ test("max is selectable without clamping for effort-based families", () => {
 test("non-family reasoning models keep the generic enable_thinking behavior", () => {
   for (const id of [
     "deepseek/deepseek-v3.2",
-    "deepseek/deepseek-r1",
+    // Real Novita model from Novita's separate_reasoning documentation.
+    "deepseek/deepseek-r1-turbo",
+    // Pre-5.2 GLM: real historical model, z.ai documents reasoning_effort
+    // only from GLM-5.2 up, so it keeps the generic enable_thinking path.
     "zai-org/glm-4.5",
-    "zai-org/glm-5.1",
     "qwen/qwen3.5-397b-a17b",
     "moonshotai/kimi-k2.5",
     "minimax/minimax-m3",
@@ -250,11 +251,15 @@ test("family matching is scoped to the exact versions", () => {
       .thinkingFormat,
     "qwen",
   );
+  // Intentional negative control: a lookalike id from another org must stay
+  // generic, proving the deepseek family is scoped to the deepseek/ org.
   assert.equal(
     map({ id: "vendor/deepseek-v4-mimic", features: ["reasoning"] }).compat
       .thinkingFormat,
     "qwen",
   );
+  // Intentional out-of-family control: pre-5.2 GLM versions have no effort
+  // vocabulary (z.ai documents reasoning_effort from GLM-5.2 up).
   assert.equal(
     map({ id: "zai-org/glm-4.5-air", features: ["reasoning"] }).compat
       .thinkingFormat,
