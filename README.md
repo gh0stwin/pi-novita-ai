@@ -21,7 +21,8 @@ extension maps only capabilities represented by both Novita metadata and Pi.
   from Novita's catalog
 - USD cost tracking for input, output, and cache-read tokens, including tiered
   prices
-- Novita's documented `enable_thinking` control and reasoning-content replay
+- Novita's documented `enable_thinking` control, per-family `reasoning_effort`
+  effort levels for DeepSeek v4 and GLM-5.2/5.3, and reasoning-content replay
   across tool calls
 - Function calling and structured-output requests through Chat Completions
 - Actionable decoding of Novita's structured error responses
