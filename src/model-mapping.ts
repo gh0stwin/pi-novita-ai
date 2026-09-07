@@ -27,7 +27,7 @@ export interface OpenAICompletionsCompat {
   supportsStrictMode?: boolean;
   maxTokensField?: "max_completion_tokens" | "max_tokens";
   requiresReasoningContentOnAssistantMessages?: boolean;
-  thinkingFormat?: "qwen" | "deepseek" | "reasoning_effort";
+  thinkingFormat?: "qwen" | "deepseek" | "zai";
 }
 
 export interface ProviderModel {
@@ -106,13 +106,16 @@ const DEEPSEEK_EFFORT_COMPAT: OpenAICompletionsCompat = {
 };
 
 // GLM-5.2/5.3 keep thinking at its API default (enabled for 5.2, forced
-// enabled for 5.3) and carry effort purely through `reasoning_effort` with no
-// thinking control sent. pi-ai documents `thinkingFormat: "reasoning_effort"`
-// for exactly this plain top-level reasoning_effort wire shape, so the label
-// matches pi's documented vocabulary.
+// enabled for 5.3) and carry effort through `reasoning_effort` on top of the
+// vendor thinking envelope: pi-ai's "zai" thinkingFormat sends
+// thinking:{type:"enabled",clear_thinking:false} when an effort is selected
+// (z.ai recommends clear_thinking:false for 5.3-Flash) and
+// thinking:{type:"disabled"} when off is picked, plus the mapped
+// reasoning_effort. Live-probed against Novita's endpoint: both shapes
+// accepted, thinking stops on the disabled envelope.
 const GLM_EFFORT_COMPAT: OpenAICompletionsCompat = {
   ...EFFORT_REASONING_COMPAT,
-  thinkingFormat: "reasoning_effort",
+  thinkingFormat: "zai",
 };
 
 /**
@@ -131,7 +134,7 @@ interface ThinkingFamily {
   /** Value that disables thinking; null when impossible. */
   off: string | null;
   /** pi-ai thinkingFormat producing the family's wire shape. */
-  thinkingFormat: "deepseek" | "reasoning_effort";
+  thinkingFormat: "deepseek" | "zai";
   /** Reference documenting the family's reasoning vocabulary. */
   docs: string;
 }
@@ -156,7 +159,7 @@ const THINKING_FAMILIES: readonly ThinkingFamily[] = [
     prefixes: ["zai-org/glm-5.3"],
     levels: ["low", "high", "max"],
     off: null,
-    thinkingFormat: "reasoning_effort",
+    thinkingFormat: "zai",
     docs: "https://docs.z.ai/guides/llm/glm-5.3",
   },
   {
@@ -167,7 +170,7 @@ const THINKING_FAMILIES: readonly ThinkingFamily[] = [
     prefixes: ["zai-org/glm-5.2"],
     levels: ["high", "max"],
     off: "none",
-    thinkingFormat: "reasoning_effort",
+    thinkingFormat: "zai",
     docs: "https://docs.z.ai/guides/capabilities/thinking",
   },
 ];
